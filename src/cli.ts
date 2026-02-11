@@ -1,10 +1,67 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { indexClear, indexSync, renderIcon, resolveIcon, searchIcons } from "./commands.js";
+import { indexClear, indexSync, previewIcons, renderIcon, resolveIcon, searchIcons } from "./commands.js";
 import { printResult } from "./output.js";
-import type { OutputFormat } from "./types.js";
+import type { AutoSelectMode, MatchMode, OutputFormat } from "./types.js";
 
-const parseOutputFormat = (value: string): OutputFormat => (value === "plain" ? "plain" : "json");
+const parseOutputFormat = (value: string): OutputFormat => {
+  if (value === "json" || value === "plain") {
+    return value;
+  }
+  throw new Error(`Invalid --format: ${value}. Expected json|plain.`);
+};
+
+const parseMatch = (value: string): MatchMode => {
+  if (value === "exact" || value === "fuzzy") {
+    return value;
+  }
+  throw new Error(`Invalid --match: ${value}. Expected exact|fuzzy.`);
+};
+
+const parseAutoSelect = (value: string): AutoSelectMode => {
+  if (value === "top1") {
+    return value;
+  }
+  throw new Error(`Invalid --auto-select: ${value}. Expected top1.`);
+};
+
+const parseIntStrict = (label: string, value: string): number => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) {
+    throw new Error(`${label} must be an integer.`);
+  }
+  return parsed;
+};
+
+const parseFloatStrict = (label: string, value: string): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${label} must be a number.`);
+  }
+  return parsed;
+};
+
+const errorToExitCode = (code: string | undefined): number => {
+  switch (code) {
+    case "INVALID_USAGE":
+      return 2;
+    case "NOT_FOUND":
+      return 3;
+    case "API_ERROR":
+      return 4;
+    case "RENDER_ERROR":
+      return 5;
+    case "FS_ERROR":
+    case "OUTPUT_EXISTS":
+      return 6;
+    case "BROWSER_ERROR":
+      return 7;
+    case "AMBIGUOUS":
+      return 8;
+    default:
+      return 1;
+  }
+};
 
 const program = new Command();
 program
@@ -24,15 +81,16 @@ program
   .option("--auto-select <mode>", "top1")
   .option("--min-score <value>", "minimum fuzzy score", "0.45")
   .option("--format <format>", "json|plain", "json")
-  .action((queryOrIcon, options) => {
-    const result = resolveIcon(queryOrIcon, {
-      match: options.match,
-      autoSelect: options.autoSelect,
-      minScore: Number(options.minScore),
-      format: parseOutputFormat(options.format)
+  .action(async (queryOrIcon, options) => {
+    const format = parseOutputFormat(options.format);
+    const result = await resolveIcon(queryOrIcon, {
+      match: parseMatch(options.match),
+      autoSelect: options.autoSelect ? parseAutoSelect(options.autoSelect) : undefined,
+      minScore: parseFloatStrict("--min-score", options.minScore),
+      format
     });
-    printResult(result, parseOutputFormat(options.format));
-    process.exit(result.ok ? 0 : result.error?.code === "AMBIGUOUS" ? 8 : 3);
+    printResult(result, format);
+    process.exitCode = result.ok ? 0 : errorToExitCode(result.error?.code);
   });
 
 program
@@ -48,49 +106,87 @@ program
   .option("--force", "overwrite existing file", false)
   .option("--dry-run", "no file write", false)
   .option("--format <format>", "json|plain", "json")
-  .action((queryOrIcon, options) => {
-    const result = renderIcon(queryOrIcon, {
+  .action(async (queryOrIcon, options) => {
+    const format = parseOutputFormat(options.format);
+    const result = await renderIcon(queryOrIcon, {
       output: options.output,
-      size: Number(options.size),
+      size: parseIntStrict("--size", options.size),
       bg: options.bg,
-      match: options.match,
-      autoSelect: options.autoSelect,
-      minScore: Number(options.minScore),
+      match: parseMatch(options.match),
+      autoSelect: options.autoSelect ? parseAutoSelect(options.autoSelect) : undefined,
+      minScore: parseFloatStrict("--min-score", options.minScore),
       force: Boolean(options.force),
       dryRun: Boolean(options.dryRun),
-      format: parseOutputFormat(options.format)
+      format
     });
-    printResult(result, parseOutputFormat(options.format));
-    process.exit(result.ok ? 0 : result.error?.code === "AMBIGUOUS" ? 8 : 1);
+    printResult(result, format);
+    process.exitCode = result.ok ? 0 : errorToExitCode(result.error?.code);
   });
 
 program
   .command("search")
-  .description("Fuzzy search icons from local index")
+  .description("Fuzzy search icons using Iconify API")
   .argument("<query>")
   .option("--limit <n>", "max results", "20")
   .option("--format <format>", "json|plain", "json")
-  .action((query, options) => {
-    const result = searchIcons(query, {
-      limit: Number(options.limit),
-      format: parseOutputFormat(options.format)
+  .action(async (query, options) => {
+    const format = parseOutputFormat(options.format);
+    const result = await searchIcons(query, {
+      limit: parseIntStrict("--limit", options.limit),
+      format
     });
-    printResult(result, parseOutputFormat(options.format));
-    process.exit(result.ok ? 0 : 3);
+    printResult(result, format);
+    process.exitCode = result.ok ? 0 : errorToExitCode(result.error?.code);
+  });
+
+program
+  .command("preview")
+  .description("Open Icônes browser preview page for a query")
+  .argument("<query>")
+  .option("--collection <name>", "Icônes collection page", "all")
+  .option("--no-open", "print URL without opening browser")
+  .option("--format <format>", "json|plain", "json")
+  .action(async (query, options) => {
+    const format = parseOutputFormat(options.format);
+    const result = await previewIcons(query, {
+      collection: options.collection,
+      open: Boolean(options.open),
+      format
+    });
+    printResult(result, format);
+    process.exitCode = result.ok ? 0 : errorToExitCode(result.error?.code);
   });
 
 const indexCommand = program.command("index").description("Manage icon index cache");
 
-indexCommand.command("sync").description("Sync icon index").action(() => {
-  const result = indexSync();
-  printResult(result, "json");
-  process.exit(0);
-});
+indexCommand
+  .command("sync")
+  .description("Sync icon index from Iconify API")
+  .option("--concurrency <n>", "parallel collection fetches", "12")
+  .option("--include-hidden", "include hidden icons and aliases", false)
+  .option("--format <format>", "json|plain", "json")
+  .action(async (options) => {
+    const format = parseOutputFormat(options.format);
+    const result = await indexSync({
+      concurrency: parseIntStrict("--concurrency", options.concurrency),
+      includeHidden: Boolean(options.includeHidden)
+    });
+    printResult(result, format);
+    process.exitCode = result.ok ? 0 : errorToExitCode(result.error?.code);
+  });
 
-indexCommand.command("clear").description("Clear icon index cache").action(() => {
-  const result = indexClear();
-  printResult(result, "json");
-  process.exit(0);
-});
+indexCommand
+  .command("clear")
+  .description("Clear local index cache")
+  .option("--format <format>", "json|plain", "json")
+  .action(async (options) => {
+    const format = parseOutputFormat(options.format);
+    const result = await indexClear();
+    printResult(result, format);
+    process.exitCode = result.ok ? 0 : errorToExitCode(result.error?.code);
+  });
 
-program.parseAsync(process.argv);
+program.parseAsync(process.argv).catch((error) => {
+  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+  process.exit(2);
+});
