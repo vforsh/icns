@@ -15,11 +15,16 @@ export type OutputFormat = "json" | "plain";
 
 export type MatchMode = "exact" | "fuzzy";
 export type AutoSelectMode = "top1";
+export type SourceMode = "auto" | "index" | "api";
 
 export interface ResolveOptions {
   match: MatchMode;
   autoSelect?: AutoSelectMode;
   minScore: number;
+  source: SourceMode;
+  offline: boolean;
+  collections?: string[];
+  preferPrefixes?: string[];
   format: OutputFormat;
 }
 
@@ -34,6 +39,9 @@ export interface RenderOptions extends ResolveOptions {
 
 export interface SearchOptions {
   limit: number;
+  source: SourceMode;
+  offline: boolean;
+  collections?: string[];
   format: OutputFormat;
 }
 
