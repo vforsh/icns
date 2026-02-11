@@ -72,8 +72,8 @@ const rankCandidates = (query: string, ids: string[], preferredPrefixes: Set<str
 const escapeAttribute = (value: string): string =>
   value.replaceAll("&", "&amp;").replaceAll("\"", "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
 
-const applyForegroundColor = (svg: string, color: string): string => {
-  const sanitized = color.trim();
+const applyForegroundColor = (svg: string, color?: string): string => {
+  const sanitized = color?.trim() ?? "";
   if (!sanitized) {
     return svg;
   }
@@ -320,13 +320,13 @@ export const renderIcon = async (queryOrIcon: string, opts: RenderOptions) => {
         output: opts.output,
         size: opts.size,
         bg: opts.bg,
-        fg: opts.fg,
+        fg: opts.fg ?? "preserve",
         bytes: png.byteLength,
         dryRun: false
       });
     }
 
-    return ok({ icon, output: opts.output, size: opts.size, bg: opts.bg, fg: opts.fg, dryRun: true });
+    return ok({ icon, output: opts.output, size: opts.size, bg: opts.bg, fg: opts.fg ?? "preserve", dryRun: true });
   } catch (error) {
     return failWith("RENDER_ERROR", "Failed to render PNG", toErrorDetails(error));
   }

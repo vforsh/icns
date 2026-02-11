@@ -20,7 +20,7 @@ bun link
 
 ```bash
 icns resolve <query-or-icon> [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--min-score 0.45] [--format json|plain]
-icns render <query-or-icon> -o <path> [--size 24] [--bg transparent] [--fg white] [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--force] [--dry-run] [--format json|plain]
+icns render <query-or-icon> -o <path> [--size 24] [--bg transparent] [--fg <color>] [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--force] [--dry-run] [--format json|plain]
 icns search <query> [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--limit 20] [--format json|plain]
 icns preview <query> [--collection all] [--no-open] [--format json|plain]
 icns index sync [--concurrency 12] [--include-hidden] [--format json|plain]
@@ -42,6 +42,7 @@ icns index clear [--format json|plain]
 - `--source api`: API only.
 - `--offline`: disable network access and force local-index behavior.
 - `render --offline`: supported only with `--dry-run` (PNG rendering still needs SVG download).
+- `render --fg`: optional; when omitted, original SVG colors are preserved.
 
 ## Exit Codes
 

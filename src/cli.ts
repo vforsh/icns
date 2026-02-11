@@ -151,7 +151,7 @@ program
   .requiredOption("-o, --output <path>", "output png path")
   .option("--size <px>", "png width/height", "24")
   .option("--bg <color>", "background color", "transparent")
-  .option("--fg <color>", "foreground icon color", "white")
+  .option("--fg <color>", "foreground icon color (default: preserve original colors)")
   .option("--match <mode>", "exact|fuzzy", "exact")
   .option("--source <mode>", "auto|index|api", "auto")
   .option("--offline", "disable network and use local index only", false)
