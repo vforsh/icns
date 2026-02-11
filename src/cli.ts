@@ -100,6 +100,7 @@ program
   .requiredOption("-o, --output <path>", "output png path")
   .option("--size <px>", "png width/height", "24")
   .option("--bg <color>", "background color", "transparent")
+  .option("--fg <color>", "foreground icon color", "white")
   .option("--match <mode>", "exact|fuzzy", "exact")
   .option("--auto-select <mode>", "top1")
   .option("--min-score <value>", "minimum fuzzy score", "0.45")
@@ -112,6 +113,7 @@ program
       output: options.output,
       size: parseIntStrict("--size", options.size),
       bg: options.bg,
+      fg: options.fg,
       match: parseMatch(options.match),
       autoSelect: options.autoSelect ? parseAutoSelect(options.autoSelect) : undefined,
       minScore: parseFloatStrict("--min-score", options.minScore),

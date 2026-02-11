@@ -25,6 +25,30 @@ const rankCandidates = (query: string, ids: string[]): Array<{ icon: string; sco
     .sort((left, right) => right.score - left.score);
 };
 
+const escapeAttribute = (value: string): string =>
+  value.replaceAll("&", "&amp;").replaceAll("\"", "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+const applyForegroundColor = (svg: string, color: string): string => {
+  const sanitized = color.trim();
+  if (!sanitized) {
+    return svg;
+  }
+
+  const withStyle = svg.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
+    if (/\sstyle=(["']).*?\1/i.test(attrs)) {
+      return `<svg${attrs.replace(
+        /\sstyle=(["'])(.*?)\1/i,
+        (_styleMatch, quote: string, styleValue: string) =>
+          ` style=${quote}${styleValue};color:${escapeAttribute(sanitized)}${quote}`
+      )}>`;
+    }
+
+    return `<svg${attrs} style="color:${escapeAttribute(sanitized)}">`;
+  });
+
+  return withStyle.replace(/currentColor/gi, sanitized);
+};
+
 const withConcurrency = async <T, R>(
   items: T[],
   concurrency: number,
@@ -117,7 +141,8 @@ export const renderIcon = async (queryOrIcon: string, opts: RenderOptions) => {
       }
 
       const svg = await downloadIconSvg(icon);
-      const rendered = new Resvg(svg, {
+      const coloredSvg = applyForegroundColor(svg, opts.fg);
+      const rendered = new Resvg(coloredSvg, {
         fitTo: { mode: "width", value: opts.size },
         background: opts.bg === "transparent" ? undefined : opts.bg
       }).render();
@@ -131,12 +156,13 @@ export const renderIcon = async (queryOrIcon: string, opts: RenderOptions) => {
         output: opts.output,
         size: opts.size,
         bg: opts.bg,
+        fg: opts.fg,
         bytes: png.byteLength,
         dryRun: false
       });
     }
 
-    return ok({ icon, output: opts.output, size: opts.size, bg: opts.bg, dryRun: true });
+    return ok({ icon, output: opts.output, size: opts.size, bg: opts.bg, fg: opts.fg, dryRun: true });
   } catch (error) {
     return failWith("RENDER_ERROR", "Failed to render PNG", toErrorDetails(error));
   }

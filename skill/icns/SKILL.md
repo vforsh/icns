@@ -69,6 +69,12 @@ Render from fuzzy query:
 icns render bacon -o ./bacon.png --match fuzzy --auto-select top1 --size 48 --format json
 ```
 
+Render with explicit foreground color:
+
+```bash
+icns render simple-icons:github -o ./github-red.png --size 64 --fg '#ff0000' --force --format json
+```
+
 Dry run without writing file:
 
 ```bash
@@ -82,6 +88,7 @@ icns render bacon -o ./bacon.png --match fuzzy --auto-select top1 --dry-run --fo
 - `--auto-select top1`: required for deterministic fuzzy auto-pick.
 - `--size <px>`: PNG output size.
 - `--bg <color>`: PNG background color (`transparent` by default).
+- `--fg <color>`: icon foreground color (`white` by default).
 - `--force`: overwrite output file.
 - `--dry-run`: return plan only, no write.
 
@@ -106,4 +113,4 @@ icns render bacon -o ./bacon.png --match fuzzy --auto-select top1 --dry-run --fo
 
 1. `search` or `preview` to inspect options.
 2. `resolve` to lock final icon ID.
-3. `render` with explicit `--size`, `--force`/`--dry-run`, and `--format json`.
+3. `render` with explicit `--size`, `--fg`, `--force`/`--dry-run`, and `--format json`.
