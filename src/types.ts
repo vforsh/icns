@@ -33,6 +33,7 @@ export interface RenderOptions extends ResolveOptions {
   size: number;
   bg: string;
   fg?: string;
+  strokeWidth?: number;
   force: boolean;
   dryRun: boolean;
 }

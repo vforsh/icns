@@ -32,7 +32,7 @@ bun link
 
 ```bash
 icns resolve <query-or-icon> [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--min-score 0.45] [--format json|plain]
-icns render <query-or-icon> -o <path> [--size 24] [--bg transparent] [--fg <color>] [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--force] [--dry-run] [--format json|plain]
+icns render <query-or-icon> -o <path> [--size 24] [--bg transparent] [--fg <color>] [--stroke-width <value>] [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--force] [--dry-run] [--format json|plain]
 icns search <query> [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--limit 20] [--format json|plain]
 icns preview <query> [--collection all] [--no-open] [--format json|plain]
 icns index sync [--concurrency 12] [--include-hidden] [--format json|plain]
@@ -80,6 +80,7 @@ icns resolve bacon --match fuzzy --collection mdi --prefer-prefix mdi --auto-sel
 icns resolve mdi:home --match exact --source index --offline --format plain
 
 icns render simple-icons:github -o ./github.png --size 64 --force --format json
+icns render lucide:heart -o ./heart-thick.png --size 96 --stroke-width 2.25 --force --format json
 icns render bacon -o ./bacon.png --match fuzzy --source index --offline --dry-run --auto-select top1 --format json
 icns render bacon -o ./bacon-red.png --size 48 --fg '#ff0000' --collection simple-icons --auto-select top1 --format json
 

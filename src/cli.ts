@@ -50,6 +50,14 @@ const parseFloatStrict = (label: string, value: string): number => {
   return parsed;
 };
 
+const parsePositiveFloat = (label: string, value: string): number => {
+  const parsed = parseFloatStrict(label, value);
+  if (parsed <= 0) {
+    throw new Error(`${label} must be a positive number.`);
+  }
+  return parsed;
+};
+
 const parsePrefixCsv = (label: string, value?: string): string[] | undefined => {
   if (!value) {
     return undefined;
@@ -107,7 +115,7 @@ const program = new Command();
 program
   .name("icns")
   .description("Agent-first Iconify icon resolver and PNG renderer")
-  .version("0.1.2")
+  .version("0.1.3")
   .showHelpAfterError()
   .configureOutput({
     outputError: (str, write) => write(str)
@@ -152,6 +160,7 @@ program
   .option("--size <px>", "png width/height", "24")
   .option("--bg <color>", "background color", "transparent")
   .option("--fg <color>", "foreground icon color (default: preserve original colors)")
+  .option("--stroke-width <value>", "override SVG stroke width for stroked icons")
   .option("--match <mode>", "exact|fuzzy", "exact")
   .option("--source <mode>", "auto|index|api", "auto")
   .option("--offline", "disable network and use local index only", false)
@@ -172,6 +181,7 @@ program
       size: parseIntStrict("--size", options.size),
       bg: options.bg,
       fg: options.fg,
+      strokeWidth: options.strokeWidth === undefined ? undefined : parsePositiveFloat("--stroke-width", options.strokeWidth),
       match: parseMatch(options.match),
       source: sourceMode.source,
       offline: sourceMode.offline,

@@ -93,6 +93,33 @@ const applyForegroundColor = (svg: string, color?: string): string => {
   return withStyle.replace(/currentColor/gi, sanitized);
 };
 
+const applyStrokeWidth = (svg: string, width?: number): string => {
+  if (width === undefined) {
+    return svg;
+  }
+
+  const value = String(width);
+  const escaped = escapeAttribute(value);
+
+  const withAttributes = svg.replace(/\sstroke-width=(["']).*?\1/gi, ` stroke-width="${escaped}"`);
+  const withStyles = withAttributes.replace(/stroke-width\s*:\s*[^;"']+/gi, `stroke-width:${value}`);
+
+  if (/\bstroke-width\s*=|stroke-width\s*:/i.test(withStyles)) {
+    return withStyles;
+  }
+
+  return withStyles.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
+    if (/\sstyle=(["']).*?\1/i.test(attrs)) {
+      return `<svg${attrs.replace(
+        /\sstyle=(["'])(.*?)\1/i,
+        (_styleMatch, quote: string, styleValue: string) => ` style=${quote}${styleValue};stroke-width:${escaped}${quote}`
+      )}>`;
+    }
+
+    return `<svg${attrs} style="stroke-width:${escaped}">`;
+  });
+};
+
 const withConcurrency = async <T, R>(
   items: T[],
   concurrency: number,
@@ -277,6 +304,10 @@ export const renderIcon = async (queryOrIcon: string, opts: RenderOptions) => {
     return failWith("INVALID_USAGE", "--size must be a positive integer");
   }
 
+  if (opts.strokeWidth !== undefined && (!Number.isFinite(opts.strokeWidth) || opts.strokeWidth <= 0)) {
+    return failWith("INVALID_USAGE", "--stroke-width must be a positive number");
+  }
+
   if (opts.offline && !opts.dryRun) {
     return failWith(
       "INVALID_USAGE",
@@ -306,7 +337,8 @@ export const renderIcon = async (queryOrIcon: string, opts: RenderOptions) => {
 
       const svg = await downloadIconSvg(icon);
       const coloredSvg = applyForegroundColor(svg, opts.fg);
-      const rendered = new Resvg(coloredSvg, {
+      const strokedSvg = applyStrokeWidth(coloredSvg, opts.strokeWidth);
+      const rendered = new Resvg(strokedSvg, {
         fitTo: { mode: "width", value: opts.size },
         background: opts.bg === "transparent" ? undefined : opts.bg
       }).render();
@@ -321,12 +353,21 @@ export const renderIcon = async (queryOrIcon: string, opts: RenderOptions) => {
         size: opts.size,
         bg: opts.bg,
         fg: opts.fg ?? "preserve",
+        strokeWidth: opts.strokeWidth ?? "preserve",
         bytes: png.byteLength,
         dryRun: false
       });
     }
 
-    return ok({ icon, output: opts.output, size: opts.size, bg: opts.bg, fg: opts.fg ?? "preserve", dryRun: true });
+    return ok({
+      icon,
+      output: opts.output,
+      size: opts.size,
+      bg: opts.bg,
+      fg: opts.fg ?? "preserve",
+      strokeWidth: opts.strokeWidth ?? "preserve",
+      dryRun: true
+    });
   } catch (error) {
     return failWith("RENDER_ERROR", "Failed to render PNG", toErrorDetails(error));
   }

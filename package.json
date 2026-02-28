@@ -1,6 +1,6 @@
 {
   "name": "@vforsh/icns",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Agent-first CLI to resolve Iconify icons and render PNGs",
   "type": "module",
   "bin": {
