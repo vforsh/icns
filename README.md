@@ -2,11 +2,12 @@
 
 Agent-first CLI for Iconify icons.
 
-- Resolve icon ids from exact or fuzzy queries
-- Download SVG from Iconify API
-- Rasterize to PNG
-- Save full icon index locally
-- Run local-first/offline lookups from index cache
+- Resolve icon IDs from exact or fuzzy queries
+- Download raw SVG assets
+- Rasterize PNG files (single or batch)
+- Inspect collections metadata
+- Run health checks for API/cache/index
+- Keep a local index cache for local-first lookups
 
 ## Install
 
@@ -24,6 +25,7 @@ bun add -g @vforsh/icns
 
 ```bash
 bun install
+bun run check
 bun run build
 bun link
 ```
@@ -31,13 +33,53 @@ bun link
 ## Commands
 
 ```bash
-icns resolve <query-or-icon> [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--min-score 0.45] [--format json|plain]
-icns render <query-or-icon> -o <path> [--size 24] [--bg transparent] [--fg <color>] [--stroke-width <value>] [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--force] [--dry-run] [--format json|plain]
-icns search <query> [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--limit 20] [--format json|plain]
+icns resolve [query-or-icon] [--stdin] [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--min-score 0.45] [--format json|plain]
+icns search [query] [--stdin] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--limit 20] [--format json|plain]
+icns render [query-or-icon] [-o <path>] [--stdin] [--size 24] [--bg transparent] [--fg <color>] [--stroke-width <value>] [--match exact|fuzzy] [--source auto|index|api] [--offline] [--collection mdi,simple-icons] [--prefer-prefix mdi] [--auto-select top1] [--force] [--dry-run] [--format json|plain]
+icns render-many <manifest> [--concurrency 4] [--fail-fast] [render defaults...] [--format json|plain]
+icns fetch <query-or-icon> -o <path.svg> [resolve flags...] [--force] [--format json|plain]
 icns preview <query> [--collection all] [--no-open] [--format json|plain]
+icns collections list [--source auto|index|api] [--offline] [--limit 0] [--format json|plain]
+icns collections info <prefix> [--source auto|index|api] [--offline] [--icons-limit 20] [--format json|plain]
+icns doctor [--offline] [--format json|plain]
 icns index sync [--concurrency 12] [--include-hidden] [--format json|plain]
 icns index status [--format json|plain]
 icns index clear [--format json|plain]
+```
+
+## Render-Many Manifest
+
+`render-many` accepts JSON or CSV.
+
+JSON (`items` array or raw array):
+
+```json
+[
+  { "query": "simple-icons:github", "output": "./icons/github.png", "size": 64 },
+  { "queryOrIcon": "bacon", "output": "./icons/bacon.png", "match": "fuzzy", "autoSelect": "top1" }
+]
+```
+
+CSV (headers map to item fields):
+
+```csv
+query,output,size,match,autoSelect
+simple-icons:github,./icons/github.png,64,exact,
+bacon,./icons/bacon.png,48,fuzzy,top1
+```
+
+## Stdin Modes
+
+- `resolve --stdin`: newline-separated queries
+- `search --stdin`: newline-separated queries
+- `render --stdin`: tab-separated lines: `<query-or-icon>\t<output-path>`
+
+Examples:
+
+```bash
+printf "bacon\nmdi:home\n" | icns resolve --stdin --match fuzzy --auto-select top1 --format json
+printf "bacon\nheart\n" | icns search --stdin --limit 5 --format json
+printf "simple-icons:github\t/tmp/gh.png\n" | icns render --stdin --size 64 --force --format json
 ```
 
 ## API + Cache
@@ -49,12 +91,12 @@ icns index clear [--format json|plain]
 
 ## Source Modes
 
-- `--source auto`: use local index if present; fallback to API when needed.
-- `--source index`: local index only (requires `icns index sync`).
+- `--source auto`: use local index if present; fallback to API.
+- `--source index`: local index only (`icns index sync` required).
 - `--source api`: API only.
-- `--offline`: disable network access and force local-index behavior.
-- `render --offline`: supported only with `--dry-run` (PNG rendering still needs SVG download).
-- `render --fg`: optional; when omitted, original SVG colors are preserved.
+- `--offline`: disable network and force local-index behavior.
+- `render --offline`: supported only with `--dry-run`.
+- `fetch --offline`: not supported (fetch always downloads SVG).
 
 ## Exit Codes
 
@@ -70,19 +112,14 @@ icns index clear [--format json|plain]
 ## Examples
 
 ```bash
-icns index status --format json
 icns index sync --concurrency 16 --format json
-
 icns search bacon --collection simple-icons --limit 10 --format plain
-icns search bacon --source index --offline --format json
-
-icns resolve bacon --match fuzzy --collection mdi --prefer-prefix mdi --auto-select top1 --format json
-icns resolve mdi:home --match exact --source index --offline --format plain
-
+icns resolve bacon --match fuzzy --auto-select top1 --format json
 icns render simple-icons:github -o ./github.png --size 64 --force --format json
-icns render lucide:heart -o ./heart-thick.png --size 96 --stroke-width 2.25 --force --format json
-icns render bacon -o ./bacon.png --match fuzzy --source index --offline --dry-run --auto-select top1 --format json
-icns render bacon -o ./bacon-red.png --size 48 --fg '#ff0000' --collection simple-icons --auto-select top1 --format json
-
-icns preview bacon --collection all --format plain
+icns fetch simple-icons:github -o ./github.svg --force --format json
+icns render-many ./manifest.json --concurrency 8 --format json
+icns collections list --limit 20 --format json
+icns collections info simple-icons --icons-limit 5 --format json
+icns doctor --format json
 ```
+

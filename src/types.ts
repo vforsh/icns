@@ -56,3 +56,51 @@ export interface PreviewOptions {
   open: boolean;
   format: OutputFormat;
 }
+
+export interface FetchOptions extends ResolveOptions {
+  output: string;
+  force: boolean;
+}
+
+export interface RenderManyItem {
+  queryOrIcon: string;
+  output: string;
+  size?: number;
+  bg?: string;
+  fg?: string;
+  strokeWidth?: number;
+  match?: MatchMode;
+  source?: SourceMode;
+  offline?: boolean;
+  collections?: string[];
+  preferPrefixes?: string[];
+  autoSelect?: AutoSelectMode;
+  minScore?: number;
+  force?: boolean;
+  dryRun?: boolean;
+}
+
+export interface RenderManyOptions extends Omit<RenderOptions, "output"> {
+  manifestPath: string;
+  concurrency: number;
+  failFast: boolean;
+}
+
+export interface CollectionsListOptions {
+  source: SourceMode;
+  offline: boolean;
+  limit: number;
+  format: OutputFormat;
+}
+
+export interface CollectionsInfoOptions {
+  source: SourceMode;
+  offline: boolean;
+  iconsLimit: number;
+  format: OutputFormat;
+}
+
+export interface DoctorOptions {
+  offline: boolean;
+  format: OutputFormat;
+}

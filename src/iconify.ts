@@ -8,11 +8,32 @@ interface SearchResponse {
 }
 
 interface CollectionsResponse {
-  [prefix: string]: unknown;
+  [prefix: string]: CollectionMetadata;
 }
 
-interface CollectionResponse {
+export interface CollectionMetadata {
+  name?: string;
+  total?: number;
+  title?: string;
+  category?: string;
+  palette?: boolean;
+  samples?: string[];
+  tags?: string[];
+  author?: {
+    name?: string;
+    url?: string;
+  };
+  license?: {
+    title?: string;
+    spdx?: string;
+    url?: string;
+  };
+}
+
+export interface CollectionResponse {
   prefix: string;
+  total?: number;
+  title?: string;
   uncategorized?: string[];
   categories?: Record<string, string[]>;
   hidden?: string[];
@@ -33,13 +54,19 @@ export const iconExists = async (iconId: string): Promise<boolean> => resourceEx
 
 export const downloadIconSvg = async (iconId: string): Promise<string> => fetchText(`/${iconId}.svg`);
 
+export const getCollectionsMetadata = async (): Promise<Record<string, CollectionMetadata>> =>
+  fetchJson<CollectionsResponse>("/collections");
+
 export const getCollectionPrefixes = async (): Promise<string[]> => {
-  const collections = await fetchJson<CollectionsResponse>("/collections");
+  const collections = await getCollectionsMetadata();
   return Object.keys(collections);
 };
 
+export const getCollectionData = async (prefix: string): Promise<CollectionResponse> =>
+  fetchJson<CollectionResponse>(`/collection?prefix=${encodeURIComponent(prefix)}`);
+
 export const getCollectionIconNames = async (prefix: string, includeHidden: boolean): Promise<string[]> => {
-  const payload = await fetchJson<CollectionResponse>(`/collection?prefix=${encodeURIComponent(prefix)}`);
+  const payload = await getCollectionData(prefix);
   const names = new Set<string>();
 
   if (Array.isArray(payload.uncategorized)) {
