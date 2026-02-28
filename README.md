@@ -11,6 +11,18 @@ Agent-first CLI for Iconify icons.
 ## Install
 
 ```bash
+# one-off execution
+npx @vforsh/icns --help
+bunx @vforsh/icns --help
+
+# global install
+npm i -g @vforsh/icns
+bun add -g @vforsh/icns
+```
+
+## Local Development
+
+```bash
 bun install
 bun run build
 bun link

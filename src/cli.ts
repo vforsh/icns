@@ -107,7 +107,7 @@ const program = new Command();
 program
   .name("icns")
   .description("Agent-first Iconify icon resolver and PNG renderer")
-  .version("0.1.0")
+  .version("0.1.2")
   .showHelpAfterError()
   .configureOutput({
     outputError: (str, write) => write(str)

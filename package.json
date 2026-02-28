@@ -1,6 +1,6 @@
 {
-  "name": "icns",
-  "version": "0.1.0",
+  "name": "@vforsh/icns",
+  "version": "0.1.2",
   "description": "Agent-first CLI to resolve Iconify icons and render PNGs",
   "type": "module",
   "bin": {
@@ -10,6 +10,9 @@
     "build": "tsc -p tsconfig.json",
     "check": "tsc --noEmit -p tsconfig.json",
     "dev": "bun run src/cli.ts"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "bun": ">=1.1.0"
